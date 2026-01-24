@@ -7,6 +7,8 @@ import SignupPage from "@/pages/SignupPage";
 import EditorPage from "@/pages/EditorPage";
 import DashboardPage from "@/pages/DashboardPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
+import EmailVerificationPage from "@/pages/EmailVerificationPage";
+import OwnerSetupPage from "@/pages/OwnerSetupPage";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
