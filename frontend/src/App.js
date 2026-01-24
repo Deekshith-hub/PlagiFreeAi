@@ -32,6 +32,7 @@ function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/verify-email" element={<EmailVerificationPage />} />
       <Route
         path="/editor"
         element={
@@ -53,6 +54,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PaymentSuccessPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/setup"
+        element={
+          <ProtectedRoute>
+            <OwnerSetupPage />
           </ProtectedRoute>
         }
       />
