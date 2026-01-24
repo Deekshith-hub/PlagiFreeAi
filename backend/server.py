@@ -18,6 +18,8 @@ from emergentintegrations.payments.stripe.checkout import StripeCheckout, Checko
 from docx import Document
 from io import BytesIO
 import difflib
+import secrets
+from email_service import send_verification_email, send_owner_setup_reminder
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
