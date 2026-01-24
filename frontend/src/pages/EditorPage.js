@@ -339,14 +339,35 @@ export default function EditorPage() {
                   </div>
                 </div>
               ) : rewrittenText ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  data-testid="rewritten-text-output"
-                >
-                  {rewrittenText}
-                </motion.div>
+                showDiff ? (
+                  <div className="text-sm">
+                    <ReactDiffViewer
+                      oldValue={originalText}
+                      newValue={rewrittenText}
+                      splitView={false}
+                      showDiffOnly={false}
+                      useDarkTheme={false}
+                      styles={{
+                        variables: {
+                          light: {
+                            diffViewerBackground: '#ffffff',
+                            addedBackground: '#d4f8d4',
+                            removedBackground: '#ffd4d4'
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    data-testid="rewritten-text-output"
+                  >
+                    {rewrittenText}
+                  </motion.div>
+                )
               ) : (
                 <p className="text-slate-300 text-center h-full flex items-center justify-center">
                   Your rewritten text will appear here...
