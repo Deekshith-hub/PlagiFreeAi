@@ -394,6 +394,79 @@ export default function EditorPage() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !processingPayment && setShowPaymentModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8"
+              data-testid="payment-modal"
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CreditCard className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-jakarta font-bold text-slate-900 mb-2">
+                  Out of Rewrites
+                </h3>
+                <p className="text-slate-600">
+                  You've used all your free daily rewrites. Purchase extra credits to continue!
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl p-6 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-slate-700 font-semibold">20 Extra Rewrites</span>
+                  <span className="text-2xl font-jakarta font-bold text-indigo-600">₹50</span>
+                </div>
+                <p className="text-sm text-slate-600">
+                  One-time purchase • Never expires
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  data-testid="purchase-credits-btn"
+                  onClick={handlePurchaseCredits}
+                  disabled={processingPayment}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 py-3 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {processingPayment ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5" />
+                      Purchase Credits
+                    </>
+                  )}
+                </button>
+                <button
+                  data-testid="cancel-payment-btn"
+                  onClick={() => setShowPaymentModal(false)}
+                  disabled={processingPayment}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-6 py-3 font-semibold transition-colors disabled:opacity-50"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
