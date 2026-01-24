@@ -494,6 +494,13 @@ async def login(credentials: UserLogin):
 
 @api_router.post("/rewrite", response_model=RewriteResponse)
 async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_current_user)):
+    # Check email verification
+    if not current_user.get("email_verified", False):
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email before using the rewriter"
+        )
+    
     # Check if user has daily rewrites left or credits
     total_available = (current_user["daily_limit"] - current_user["rewrites_today"]) + current_user.get("credits", 0)
     
