@@ -292,6 +292,123 @@ Provide ONLY the rewritten text without any explanations, introductions, or meta
 async def root():
     return {"message": "PlagiFree AI API"}
 
+@api_router.post("/auth/verify-email")
+async def verify_email(token: str):
+    """Verify user email with token"""
+    user = await db.users.find_one({"verification_token": token}, {"_id": 0})
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    
+    # Check if token expired
+    expiry = datetime.fromisoformat(user["verification_expiry"])
+    if datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="Verification token expired")
+    
+    # Verify email
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "email_verified": True,
+            "verification_token": None,
+            "verification_expiry": None
+        }}
+    )
+    
+    return {"message": "Email verified successfully"}
+
+@api_router.post("/auth/resend-verification")
+async def resend_verification(current_user: dict = Depends(get_current_user)):
+    """Resend verification email"""
+    if current_user.get("email_verified", False):
+        raise HTTPException(status_code=400, detail="Email already verified")
+    
+    # Generate new token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expiry = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {
+            "verification_token": verification_token,
+            "verification_expiry": verification_expiry
+        }}
+    )
+    
+    # Send email
+    send_verification_email(current_user["email"], verification_token)
+    
+    return {"message": "Verification email sent"}
+
+@api_router.get("/owner/setup-status", response_model=OwnerSetupResponse)
+async def get_owner_setup_status():
+    """Check if owner has completed payment setup"""
+    owner_config = await db.owner_config.find_one({}, {"_id": 0})
+    
+    if not owner_config:
+        return OwnerSetupResponse(
+            is_setup_complete=False,
+            payments_enabled=False
+        )
+    
+    return OwnerSetupResponse(
+        is_setup_complete=owner_config.get("setup_complete", False),
+        business_name=owner_config.get("business_name"),
+        support_email=owner_config.get("support_email"),
+        payments_enabled=owner_config.get("payments_enabled", False)
+    )
+
+@api_router.post("/owner/setup")
+async def setup_owner_config(
+    config: OwnerSetupRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Configure owner/admin payment details"""
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate at least one payment method
+    has_payment_method = bool(config.upi_id or config.bank_account)
+    
+    config_doc = {
+        "owner_name": config.owner_name,
+        "business_name": config.business_name,
+        "support_email": config.support_email,
+        "upi_id": config.upi_id,
+        "bank_account": config.bank_account,
+        "ifsc_code": config.ifsc_code,
+        "account_holder_name": config.account_holder_name,
+        "gst_number": config.gst_number,
+        "country": config.country,
+        "currency": config.currency,
+        "terms_url": config.terms_url,
+        "refund_policy": config.refund_policy,
+        "setup_complete": has_payment_method,
+        "payments_enabled": has_payment_method,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert owner config
+    await db.owner_config.update_one(
+        {},
+        {"$set": config_doc},
+        upsert=True
+    )
+    
+    return {"message": "Owner configuration saved successfully", "payments_enabled": has_payment_method}
+
+@api_router.get("/owner/config")
+async def get_owner_config(current_user: dict = Depends(get_current_user)):
+    """Get owner configuration (admin only)"""
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    config = await db.owner_config.find_one({}, {"_id": 0})
+    if not config:
+        raise HTTPException(status_code=404, detail="Owner configuration not found")
+    
+    return config
+
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user_data: UserRegister):
     existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
