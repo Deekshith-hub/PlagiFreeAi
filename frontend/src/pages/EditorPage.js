@@ -45,8 +45,10 @@ export default function EditorPage() {
       return;
     }
 
-    if (user.remaining <= 0) {
-      toast.error('Daily limit reached. Come back tomorrow!');
+    const totalAvailable = (user.daily_limit - user.rewrites_today) + (user.credits || 0);
+    
+    if (totalAvailable <= 0) {
+      setShowPaymentModal(true);
       return;
     }
 
@@ -60,13 +62,18 @@ export default function EditorPage() {
       });
 
       setRewrittenText(response.data.rewritten_text);
+      setPlagiarismScore(response.data.plagiarism_percentage);
+      setCurrentHistoryId(response.data.id);
       toast.success('Text rewritten successfully!');
       
-      // Update user data
       await fetchUserData();
     } catch (error) {
       const message = error.response?.data?.detail || 'Failed to rewrite text';
-      toast.error(message);
+      if (message.includes('No rewrites remaining')) {
+        setShowPaymentModal(true);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
