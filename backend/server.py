@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -7,13 +8,16 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
 import jwt
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-import asyncio
+from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from docx import Document
+from io import BytesIO
+import difflib
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -31,6 +35,9 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'plagifree_secret')
 JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM', 'HS256')
 JWT_EXPIRATION_HOURS = int(os.environ.get('JWT_EXPIRATION_HOURS', '168'))
 
+# Stripe settings
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+
 # Security
 security = HTTPBearer()
 
@@ -41,6 +48,11 @@ api_router = APIRouter(prefix="/api")
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Credit packages
+CREDIT_PACKAGES = {
+    "extra_20": {"amount": 50.0, "currency": "inr", "credits": 20, "description": "20 Extra Rewrites"}
+}
 
 # ============= MODELS =============
 
@@ -58,7 +70,9 @@ class UserResponse(BaseModel):
     email: str
     daily_limit: int
     rewrites_today: int
+    credits: int
     reset_date: str
+    email_verified: bool
 
 class TokenResponse(BaseModel):
     token: str
@@ -66,8 +80,8 @@ class TokenResponse(BaseModel):
 
 class RewriteRequest(BaseModel):
     text: str
-    mode: str  # light, standard, aggressive, human-like
-    tone: str  # academic, professional, casual, creative, formal
+    mode: str
+    tone: str
 
 class RewriteResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -78,6 +92,8 @@ class RewriteResponse(BaseModel):
     mode: str
     tone: str
     timestamp: str
+    plagiarism_percentage: float
+    changed_sentences: List[Dict[str, str]]
 
 class HistoryItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -88,13 +104,23 @@ class HistoryItem(BaseModel):
     tone: str
     original_word_count: int
     rewritten_word_count: int
+    plagiarism_percentage: float
     timestamp: str
 
 class UsageResponse(BaseModel):
     daily_limit: int
     rewrites_today: int
     remaining: int
+    credits: int
     reset_date: str
+
+class PurchaseCreditsRequest(BaseModel):
+    package_id: str
+    origin_url: str
+
+class PurchaseCreditsResponse(BaseModel):
+    checkout_url: str
+    session_id: str
 
 # ============= AUTH HELPERS =============
 
@@ -132,12 +158,59 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     
     return user
 
+# ============= HELPER FUNCTIONS =============
+
+def calculate_plagiarism_percentage(original: str, rewritten: str) -> float:
+    """Calculate similarity percentage (inverse of uniqueness)"""
+    original_words = set(original.lower().split())
+    rewritten_words = set(rewritten.lower().split())
+    
+    if not original_words:
+        return 0.0
+    
+    common_words = original_words.intersection(rewritten_words)
+    similarity = len(common_words) / len(original_words) * 100
+    
+    # Return uniqueness percentage (100 - similarity)
+    uniqueness = 100 - similarity
+    return round(max(0, min(100, uniqueness)), 1)
+
+def get_changed_sentences(original: str, rewritten: str) -> List[Dict[str, str]]:
+    """Get sentence-level differences"""
+    original_sentences = [s.strip() for s in original.split('.') if s.strip()]
+    rewritten_sentences = [s.strip() for s in rewritten.split('.') if s.strip()]
+    
+    changes = []
+    max_len = max(len(original_sentences), len(rewritten_sentences))
+    
+    for i in range(max_len):
+        original_sent = original_sentences[i] if i < len(original_sentences) else ""
+        rewritten_sent = rewritten_sentences[i] if i < len(rewritten_sentences) else ""
+        
+        if original_sent and rewritten_sent and original_sent.lower() != rewritten_sent.lower():
+            changes.append({
+                "original": original_sent,
+                "rewritten": rewritten_sent,
+                "type": "changed"
+            })
+    
+    return changes
+
+def create_docx(text: str) -> BytesIO:
+    """Create a .docx file from text"""
+    doc = Document()
+    doc.add_paragraph(text)
+    
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
 # ============= AI REWRITING =============
 
 async def rewrite_text_with_ai(text: str, mode: str, tone: str) -> str:
     """Rewrite text using OpenAI GPT-5.2 with specific mode and tone"""
     
-    # System prompts based on mode
     mode_instructions = {
         "light": "Make minimal changes to the text. Focus on rephrasing key sentences while maintaining most of the structure. Ensure the text remains academically safe and grammatically correct.",
         "standard": "Rewrite the text with balanced uniqueness and clarity. Restructure sentences moderately, use intelligent synonyms, and maintain natural readability.",
@@ -145,7 +218,6 @@ async def rewrite_text_with_ai(text: str, mode: str, tone: str) -> str:
         "human-like": "Rewrite in a natural, conversational style. Make it sound like a human wrote it from scratch. Use varied sentence structures, natural transitions, and avoid any robotic patterns."
     }
     
-    # Tone adjustments
     tone_instructions = {
         "academic": "Use formal academic language, precise terminology, and scholarly tone. Maintain objectivity and use passive voice where appropriate.",
         "professional": "Use business-appropriate language, clear and concise sentences, and professional tone. Be direct and authoritative.",
@@ -198,12 +270,10 @@ async def root():
 
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user_data: UserRegister):
-    # Check if user exists
     existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create user
     user_id = str(uuid.uuid4())
     reset_date = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=0, minute=0, second=0).isoformat()
     
@@ -213,13 +283,14 @@ async def register(user_data: UserRegister):
         "password_hash": hash_password(user_data.password),
         "daily_limit": 10,
         "rewrites_today": 0,
+        "credits": 0,
         "reset_date": reset_date,
+        "email_verified": False,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.users.insert_one(user_doc)
     
-    # Generate token
     token = create_access_token(user_id)
     
     user_response = UserResponse(
@@ -227,7 +298,9 @@ async def register(user_data: UserRegister):
         email=user_data.email,
         daily_limit=10,
         rewrites_today=0,
-        reset_date=reset_date
+        credits=0,
+        reset_date=reset_date,
+        email_verified=False
     )
     
     return TokenResponse(token=token, user=user_response)
@@ -238,7 +311,6 @@ async def login(credentials: UserLogin):
     if not user or not verify_password(credentials.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    # Check if reset is needed
     reset_date = datetime.fromisoformat(user["reset_date"])
     if datetime.now(timezone.utc) >= reset_date:
         new_reset_date = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=0, minute=0, second=0).isoformat()
@@ -256,16 +328,23 @@ async def login(credentials: UserLogin):
         email=user["email"],
         daily_limit=user["daily_limit"],
         rewrites_today=user["rewrites_today"],
-        reset_date=user["reset_date"]
+        credits=user.get("credits", 0),
+        reset_date=user["reset_date"],
+        email_verified=user.get("email_verified", False)
     )
     
     return TokenResponse(token=token, user=user_response)
 
 @api_router.post("/rewrite", response_model=RewriteResponse)
 async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_current_user)):
-    # Check usage limits
-    if current_user["rewrites_today"] >= current_user["daily_limit"]:
-        raise HTTPException(status_code=429, detail="Daily rewrite limit reached")
+    # Check if user has daily rewrites left or credits
+    total_available = (current_user["daily_limit"] - current_user["rewrites_today"]) + current_user.get("credits", 0)
+    
+    if total_available <= 0:
+        raise HTTPException(
+            status_code=429, 
+            detail="No rewrites remaining. Purchase credits to continue."
+        )
     
     # Validate inputs
     valid_modes = ["light", "standard", "aggressive", "human-like"]
@@ -276,12 +355,17 @@ async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_curr
     if request.tone not in valid_tones:
         raise HTTPException(status_code=400, detail=f"Invalid tone. Choose from: {', '.join(valid_tones)}")
     
-    # Word count
     original_word_count = len(request.text.split())
     
     # Rewrite with AI
     rewritten_text = await rewrite_text_with_ai(request.text, request.mode, request.tone)
     rewritten_word_count = len(rewritten_text.split())
+    
+    # Calculate plagiarism percentage
+    plagiarism_pct = calculate_plagiarism_percentage(request.text, rewritten_text)
+    
+    # Get changed sentences
+    changed_sentences = get_changed_sentences(request.text, rewritten_text)
     
     # Save to history
     history_id = str(uuid.uuid4())
@@ -296,16 +380,23 @@ async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_curr
         "tone": request.tone,
         "original_word_count": original_word_count,
         "rewritten_word_count": rewritten_word_count,
+        "plagiarism_percentage": plagiarism_pct,
         "timestamp": timestamp
     }
     
     await db.rewrite_history.insert_one(history_doc)
     
-    # Update user's rewrite count
-    await db.users.update_one(
-        {"id": current_user["id"]},
-        {"$inc": {"rewrites_today": 1}}
-    )
+    # Deduct from daily limit first, then credits if needed
+    if current_user["rewrites_today"] < current_user["daily_limit"]:
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"rewrites_today": 1}}
+        )
+    else:
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$inc": {"credits": -1}}
+        )
     
     return RewriteResponse(
         id=history_id,
@@ -314,7 +405,9 @@ async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_curr
         rewritten_word_count=rewritten_word_count,
         mode=request.mode,
         tone=request.tone,
-        timestamp=timestamp
+        timestamp=timestamp,
+        plagiarism_percentage=plagiarism_pct,
+        changed_sentences=changed_sentences
     )
 
 @api_router.get("/history", response_model=List[HistoryItem])
@@ -328,7 +421,6 @@ async def get_history(current_user: dict = Depends(get_current_user)):
 
 @api_router.get("/usage", response_model=UsageResponse)
 async def get_usage(current_user: dict = Depends(get_current_user)):
-    # Check if reset is needed
     reset_date = datetime.fromisoformat(current_user["reset_date"])
     if datetime.now(timezone.utc) >= reset_date:
         new_reset_date = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=0, minute=0, second=0).isoformat()
@@ -343,8 +435,161 @@ async def get_usage(current_user: dict = Depends(get_current_user)):
         daily_limit=current_user["daily_limit"],
         rewrites_today=current_user["rewrites_today"],
         remaining=current_user["daily_limit"] - current_user["rewrites_today"],
+        credits=current_user.get("credits", 0),
         reset_date=current_user["reset_date"]
     )
+
+@api_router.get("/download/{history_id}/docx")
+async def download_docx(history_id: str, current_user: dict = Depends(get_current_user)):
+    """Download rewritten text as .docx file"""
+    history_item = await db.rewrite_history.find_one(
+        {"id": history_id, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    
+    if not history_item:
+        raise HTTPException(status_code=404, detail="History item not found")
+    
+    docx_buffer = create_docx(history_item["rewritten_text"])
+    
+    return StreamingResponse(
+        docx_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename=rewritten-text-{history_id[:8]}.docx"}
+    )
+
+# ============= PAYMENT ROUTES =============
+
+@api_router.post("/payments/purchase-credits", response_model=PurchaseCreditsResponse)
+async def purchase_credits(
+    request: PurchaseCreditsRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create Stripe checkout session for purchasing credits"""
+    
+    if request.package_id not in CREDIT_PACKAGES:
+        raise HTTPException(status_code=400, detail="Invalid package")
+    
+    package = CREDIT_PACKAGES[request.package_id]
+    
+    # Initialize Stripe
+    webhook_url = f"{request.origin_url}/api/webhook/stripe"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+    
+    # Create checkout session
+    success_url = f"{request.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{request.origin_url}/editor"
+    
+    checkout_request = CheckoutSessionRequest(
+        amount=package["amount"],
+        currency=package["currency"],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata={
+            "user_id": current_user["id"],
+            "package_id": request.package_id,
+            "credits": str(package["credits"])
+        }
+    )
+    
+    session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+    
+    # Store payment transaction
+    transaction_doc = {
+        "id": str(uuid.uuid4()),
+        "session_id": session.session_id,
+        "user_id": current_user["id"],
+        "package_id": request.package_id,
+        "amount": package["amount"],
+        "currency": package["currency"],
+        "credits": package["credits"],
+        "payment_status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.payment_transactions.insert_one(transaction_doc)
+    
+    return PurchaseCreditsResponse(
+        checkout_url=session.url,
+        session_id=session.session_id
+    )
+
+@api_router.get("/payments/status/{session_id}")
+async def get_payment_status(
+    session_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Check payment status and update credits if successful"""
+    
+    # Find transaction
+    transaction = await db.payment_transactions.find_one(
+        {"session_id": session_id, "user_id": current_user["id"]},
+        {"_id": 0}
+    )
+    
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # If already processed, return status
+    if transaction["payment_status"] == "paid":
+        return {"status": "completed", "message": "Credits already added"}
+    
+    # Check with Stripe
+    webhook_url = f"http://dummy/webhook"  # Not used for status check
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+    
+    try:
+        checkout_status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update transaction status
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "payment_status": checkout_status.payment_status,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # If payment successful and not yet processed, add credits
+        if checkout_status.payment_status == "paid" and transaction["payment_status"] != "paid":
+            await db.users.update_one(
+                {"id": current_user["id"]},
+                {"$inc": {"credits": transaction["credits"]}}
+            )
+            
+            return {
+                "status": "completed",
+                "message": f"{transaction['credits']} credits added successfully",
+                "credits_added": transaction["credits"]
+            }
+        
+        return {
+            "status": checkout_status.payment_status,
+            "message": f"Payment status: {checkout_status.payment_status}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Payment status check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to check payment status")
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    try:
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        webhook_url = "http://dummy/webhook"
+        stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
+        
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        logger.info(f"Webhook received: {webhook_response.event_type}")
+        
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Webhook error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 # Include router
 app.include_router(api_router)
