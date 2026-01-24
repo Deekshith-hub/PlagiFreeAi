@@ -369,7 +369,8 @@ async def login(credentials: UserLogin):
         rewrites_today=user["rewrites_today"],
         credits=user.get("credits", 0),
         reset_date=user["reset_date"],
-        email_verified=user.get("email_verified", False)
+        email_verified=user.get("email_verified", False),
+        is_admin=user.get("is_admin", False)
     )
     
     return TokenResponse(token=token, user=user_response)
