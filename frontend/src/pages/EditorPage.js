@@ -190,6 +190,16 @@ export default function EditorPage() {
                   </div>
                 )}
               </div>
+              {user?.is_admin && (
+                <button
+                  data-testid="admin-setup-btn"
+                  onClick={() => navigate('/admin/setup')}
+                  className="flex items-center gap-2 bg-violet-100 text-violet-700 hover:bg-violet-200 rounded-full px-4 py-2 font-medium transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  Owner Setup
+                </button>
+              )}
               <button
                 data-testid="dashboard-btn"
                 onClick={() => navigate('/dashboard')}
