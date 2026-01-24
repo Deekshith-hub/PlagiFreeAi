@@ -435,7 +435,7 @@ export default function EditorPage() {
                   Out of Rewrites
                 </h3>
                 <p className="text-slate-600">
-                  You've used all your free daily rewrites. Purchase extra credits to continue!
+                  You&apos;ve used all your free daily rewrites. Purchase extra credits to continue!
                 </p>
               </div>
 
