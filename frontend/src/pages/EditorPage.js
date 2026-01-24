@@ -18,6 +18,11 @@ export default function EditorPage() {
   const [mode, setMode] = useState('standard');
   const [tone, setTone] = useState('professional');
   const [loading, setLoading] = useState(false);
+  const [plagiarismScore, setPlagiarismScore] = useState(null);
+  const [showDiff, setShowDiff] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentHistoryId, setCurrentHistoryId] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const modes = [
     { value: 'light', label: 'Light' },
