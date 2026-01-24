@@ -75,10 +75,32 @@ class UserResponse(BaseModel):
     credits: int
     reset_date: str
     email_verified: bool
+    is_admin: bool = False
 
 class TokenResponse(BaseModel):
     token: str
     user: UserResponse
+
+class OwnerSetupRequest(BaseModel):
+    business_name: Optional[str] = None
+    owner_name: str
+    support_email: EmailStr
+    upi_id: Optional[str] = None
+    bank_account: Optional[str] = None
+    ifsc_code: Optional[str] = None
+    account_holder_name: Optional[str] = None
+    gst_number: Optional[str] = None
+    country: str = "India"
+    currency: str = "INR"
+    terms_url: Optional[str] = None
+    refund_policy: Optional[str] = None
+
+class OwnerSetupResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    is_setup_complete: bool
+    business_name: Optional[str] = None
+    support_email: Optional[str] = None
+    payments_enabled: bool
 
 class RewriteRequest(BaseModel):
     text: str
