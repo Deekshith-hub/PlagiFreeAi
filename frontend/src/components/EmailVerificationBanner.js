@@ -25,30 +25,30 @@ export default function EmailVerificationBanner({ onDismiss }) {
   if (dismissed) return null;
 
   return (
-    <div className=\"bg-amber-50 border-b border-amber-200 px-4 py-3\" data-testid=\"verification-banner\">
-      <div className=\"max-w-7xl mx-auto flex items-center justify-between gap-4\">
-        <div className=\"flex items-center gap-3\">
-          <AlertCircle className=\"w-5 h-5 text-amber-600 flex-shrink-0\" />
-          <p className=\"text-sm text-amber-800\">
-            <span className=\"font-semibold\">Verify your email</span> to start rewriting text.
+    <div className="bg-amber-50 border-b border-amber-200 px-4 py-3" data-testid="verification-banner">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-800">
+            <span className="font-semibold">Verify your email</span> to start rewriting text.
             Check your inbox for the verification link.
           </p>
         </div>
-        <div className=\"flex items-center gap-2\">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleResend}
             disabled={sending}
-            className=\"text-sm bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded-full font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1\"
-            data-testid=\"resend-verification-btn\"
+            className="text-sm bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded-full font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            data-testid="resend-verification-btn"
           >
             {sending ? (
               <>
-                <div className=\"animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent\"></div>
+                <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
                 Sending...
               </>
             ) : (
               <>
-                <Mail className=\"w-3 h-3\" />
+                <Mail className="w-3 h-3" />
                 Resend
               </>
             )}
@@ -58,9 +58,9 @@ export default function EmailVerificationBanner({ onDismiss }) {
               setDismissed(true);
               if (onDismiss) onDismiss();
             }}
-            className=\"text-amber-600 hover:text-amber-800 p-1\"
+            className="text-amber-600 hover:text-amber-800 p-1"
           >
-            <X className=\"w-4 h-4\" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
