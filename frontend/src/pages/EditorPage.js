@@ -175,8 +175,16 @@ export default function EditorPage() {
               <span className="text-2xl font-jakarta font-bold text-slate-900">PlagiFree AI</span>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-sm text-slate-600">
-                <span className="font-semibold text-indigo-600">{user?.remaining || 0}</span> rewrites left today
+              <div className="flex items-center gap-3 text-sm">
+                <div className="text-slate-600">
+                  <span className="font-semibold text-indigo-600">{(user?.daily_limit || 10) - (user?.rewrites_today || 0)}</span> free left
+                </div>
+                {user?.credits > 0 && (
+                  <div className="text-slate-600 flex items-center gap-1">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span className="font-semibold text-amber-600">{user.credits}</span> credits
+                  </div>
+                )}
               </div>
               <button
                 data-testid="dashboard-btn"
