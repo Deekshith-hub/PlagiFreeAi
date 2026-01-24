@@ -301,6 +301,14 @@ async def register(user_data: UserRegister):
     user_id = str(uuid.uuid4())
     reset_date = (datetime.now(timezone.utc) + timedelta(days=1)).replace(hour=0, minute=0, second=0).isoformat()
     
+    # Generate verification token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expiry = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    
+    # Check if this is the first user (admin)
+    user_count = await db.users.count_documents({})
+    is_admin = (user_count == 0)
+    
     user_doc = {
         "id": user_id,
         "email": user_data.email,
@@ -310,10 +318,16 @@ async def register(user_data: UserRegister):
         "credits": 0,
         "reset_date": reset_date,
         "email_verified": False,
+        "is_admin": is_admin,
+        "verification_token": verification_token,
+        "verification_expiry": verification_expiry,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.users.insert_one(user_doc)
+    
+    # Send verification email
+    send_verification_email(user_data.email, verification_token)
     
     token = create_access_token(user_id)
     
@@ -324,7 +338,8 @@ async def register(user_data: UserRegister):
         rewrites_today=0,
         credits=0,
         reset_date=reset_date,
-        email_verified=False
+        email_verified=False,
+        is_admin=is_admin
     )
     
     return TokenResponse(token=token, user=user_response)
