@@ -109,7 +109,49 @@ export default function EditorPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    toast.success('Downloaded successfully!');
+    toast.success('Downloaded as .txt!');
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!currentHistoryId) {
+      toast.error('No text to download');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API}/download/${currentHistoryId}/docx`, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `rewritten-text-${currentHistoryId.substring(0, 8)}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast.success('Downloaded as .docx!');
+    } catch (error) {
+      toast.error('Failed to download .docx file');
+    }
+  };
+
+  const handlePurchaseCredits = async () => {
+    setProcessingPayment(true);
+    
+    try {
+      const originUrl = window.location.origin;
+      const response = await axios.post(`${API}/payments/purchase-credits`, {
+        package_id: 'extra_20',
+        origin_url: originUrl
+      });
+
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      toast.error('Failed to initiate payment');
+      setProcessingPayment(false);
+    }
   };
 
   const wordCount = (text) => {
