@@ -253,57 +253,57 @@ export default function EditorPage() {
           </div>
 
           {/* Rewritten Text Panel */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col h-full overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
+          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col h-[400px] sm:h-full overflow-hidden">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
               <div className="flex justify-between items-center mb-2">
-                <h3 className="font-jakarta font-semibold text-slate-900">Plagiarism-Free Text</h3>
-                <div className="flex items-center gap-2">
+                <h3 className="font-jakarta font-semibold text-slate-900 text-sm sm:text-base">Plagiarism-Free Text</h3>
+                <div className="flex items-center gap-1 sm:gap-2">
                   {plagiarismScore !== null && (
-                    <div className="flex items-center gap-1 bg-emerald-50 px-3 py-1 rounded-full">
+                    <div className="flex items-center gap-1 bg-emerald-50 px-2 sm:px-3 py-1 rounded-full">
                       <span className="text-xs font-semibold text-emerald-700">{plagiarismScore}% Unique</span>
                     </div>
                   )}
                   {rewrittenText && (
                     <button
                       onClick={() => setShowDiff(!showDiff)}
-                      className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-medium transition-colors"
+                      className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 sm:px-3 py-1 rounded-full font-medium transition-colors"
                       data-testid="toggle-diff-btn"
                     >
-                      {showDiff ? 'Hide' : 'Show'} Changes
+                      {showDiff ? 'Hide' : 'Show'}
                     </button>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-slate-500">
-                  <span data-testid="rewritten-word-count">{wordCount(rewrittenText)}</span> words | <span data-testid="rewritten-char-count">{charCount(rewrittenText)}</span> chars
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="text-xs sm:text-sm text-slate-500">
+                  <span data-testid="rewritten-word-count">{wordCount(rewrittenText)}</span> words
                 </div>
                 <button
                   data-testid="copy-btn"
                   onClick={handleCopy}
                   disabled={!rewrittenText}
-                  className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1.5 sm:p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Copy to clipboard"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
                 <button
                   data-testid="download-txt-btn"
                   onClick={handleDownload}
                   disabled={!rewrittenText}
-                  className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1.5 sm:p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Download as .txt"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
                 <button
                   data-testid="download-docx-btn"
                   onClick={handleDownloadDocx}
                   disabled={!currentHistoryId}
-                  className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1.5 sm:p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Download as .docx"
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
