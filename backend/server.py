@@ -430,7 +430,7 @@ async def register(user_data: UserRegister):
         "id": user_id,
         "email": user_data.email,
         "password_hash": hash_password(user_data.password),
-        "daily_limit": 10,
+        "daily_limit": 20,
         "rewrites_today": 0,
         "credits": 0,
         "reset_date": reset_date,
@@ -451,7 +451,7 @@ async def register(user_data: UserRegister):
     user_response = UserResponse(
         id=user_id,
         email=user_data.email,
-        daily_limit=10,
+        daily_limit=20,
         rewrites_today=0,
         credits=0,
         reset_date=reset_date,
