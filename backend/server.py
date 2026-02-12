@@ -591,7 +591,7 @@ async def get_usage(current_user: dict = Depends(get_current_user)):
         daily_limit=current_user["daily_limit"],
         rewrites_today=current_user["rewrites_today"],
         remaining=current_user["daily_limit"] - current_user["rewrites_today"],
-        credits=current_user.get("credits", 0),
+        credits=0,  # Credits system disabled
         reset_date=current_user["reset_date"]
     )
 
