@@ -189,18 +189,18 @@ export default function EditorPage() {
       </header>
 
       {/* Main Editor */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Mode & Tone Selectors */}
-        <div className="mb-6 space-y-4">
+        <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Rewrite Mode</label>
+            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">Rewrite Mode</label>
             <div className="flex flex-wrap gap-2">
               {modes.map((m) => (
                 <button
                   key={m.value}
                   data-testid={`mode-${m.value}-btn`}
                   onClick={() => setMode(m.value)}
-                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                     mode === m.value
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
                       : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300'
@@ -213,14 +213,14 @@ export default function EditorPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Tone</label>
+            <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">Tone</label>
             <div className="flex flex-wrap gap-2">
               {tones.map((t) => (
                 <button
                   key={t.value}
                   data-testid={`tone-${t.value}-btn`}
                   onClick={() => setTone(t.value)}
-                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                     tone === t.value
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
                       : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300'
@@ -234,13 +234,13 @@ export default function EditorPage() {
         </div>
 
         {/* Two-Panel Editor */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-280px)] min-h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-h-[500px] sm:min-h-[600px]">
           {/* Original Text Panel */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col h-full overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h3 className="font-jakarta font-semibold text-slate-900">Original Text</h3>
-              <div className="text-sm text-slate-500">
-                <span data-testid="original-word-count">{wordCount(originalText)}</span> words | <span data-testid="original-char-count">{charCount(originalText)}</span> chars
+          <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col h-[400px] sm:h-full overflow-hidden">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center gap-2">
+              <h3 className="font-jakarta font-semibold text-slate-900 text-sm sm:text-base">Original Text</h3>
+              <div className="text-xs sm:text-sm text-slate-500">
+                <span data-testid="original-word-count">{wordCount(originalText)}</span> words
               </div>
             </div>
             <textarea
