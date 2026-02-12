@@ -501,13 +501,11 @@ async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_curr
             detail="Please verify your email before using the rewriter"
         )
     
-    # Check if user has daily rewrites left or credits
-    total_available = (current_user["daily_limit"] - current_user["rewrites_today"]) + current_user.get("credits", 0)
-    
-    if total_available <= 0:
+    # Check if user has daily rewrites left (removed credits - only free daily limit)
+    if current_user["rewrites_today"] >= current_user["daily_limit"]:
         raise HTTPException(
             status_code=429, 
-            detail="No rewrites remaining. Purchase credits to continue."
+            detail="Daily rewrite limit reached. Come back tomorrow for 20 more free rewrites!"
         )
     
     # Validate inputs
