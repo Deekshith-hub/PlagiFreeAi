@@ -46,13 +46,6 @@ export default function EditorPage() {
       return;
     }
 
-    const totalAvailable = (user.daily_limit - user.rewrites_today) + (user.credits || 0);
-    
-    if (totalAvailable <= 0) {
-      setShowPaymentModal(true);
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -70,11 +63,7 @@ export default function EditorPage() {
       await fetchUserData();
     } catch (error) {
       const message = error.response?.data?.detail || 'Failed to rewrite text';
-      if (message.includes('No rewrites remaining')) {
-        setShowPaymentModal(true);
-      } else {
-        toast.error(message);
-      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }
