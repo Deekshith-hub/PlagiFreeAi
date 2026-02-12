@@ -548,17 +548,11 @@ async def rewrite(request: RewriteRequest, current_user: dict = Depends(get_curr
     
     await db.rewrite_history.insert_one(history_doc)
     
-    # Deduct from daily limit first, then credits if needed
-    if current_user["rewrites_today"] < current_user["daily_limit"]:
-        await db.users.update_one(
-            {"id": current_user["id"]},
-            {"$inc": {"rewrites_today": 1}}
-        )
-    else:
-        await db.users.update_one(
-            {"id": current_user["id"]},
-            {"$inc": {"credits": -1}}
-        )
+    # Update user's rewrite count (removed credits system - only daily limit)
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"rewrites_today": 1}}
+    )
     
     return RewriteResponse(
         id=history_id,
