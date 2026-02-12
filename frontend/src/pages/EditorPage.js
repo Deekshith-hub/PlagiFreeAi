@@ -125,23 +125,6 @@ export default function EditorPage() {
     }
   };
 
-  const handlePurchaseCredits = async () => {
-    setProcessingPayment(true);
-    
-    try {
-      const originUrl = window.location.origin;
-      const response = await axios.post(`${API}/payments/purchase-credits`, {
-        package_id: 'extra_20',
-        origin_url: originUrl
-      });
-
-      window.location.href = response.data.checkout_url;
-    } catch (error) {
-      toast.error('Failed to initiate payment');
-      setProcessingPayment(false);
-    }
-  };
-
   const wordCount = (text) => {
     return text.trim() ? text.trim().split(/\s+/).length : 0;
   };
