@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Copy, Download, History, LogOut, BarChart3, FileText, CreditCard, Settings } from 'lucide-react';
+import { Sparkles, Copy, Download, LogOut, BarChart3, FileText, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactDiffViewer from 'react-diff-viewer-continued';
-import EmailVerificationBanner from '@/components/EmailVerificationBanner';
 import { RewriteResponse } from '@/types/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -138,10 +137,6 @@ export default function EditorPage(): React.JSX.Element {
 
   const wordCount = (text: string): number => {
     return text.trim() ? text.trim().split(/\s+/).length : 0;
-  };
-
-  const charCount = (text: string): number => {
-    return text.length;
   };
 
   return (

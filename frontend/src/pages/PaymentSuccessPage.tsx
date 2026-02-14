@@ -31,6 +31,7 @@ export default function PaymentSuccessPage(): React.JSX.Element {
     } else {
       setStatus('error');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const pollPaymentStatus = async (sessionId: string, attempts: number = 0): Promise<void> => {

@@ -24,6 +24,7 @@ export default function EmailVerificationPage(): React.JSX.Element {
       setStatus('error');
       setMessage('Invalid verification link');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const verifyEmail = async (token: string): Promise<void> => {

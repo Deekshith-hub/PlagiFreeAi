@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Save, DollarSign, Mail, Building, CreditCard } from 'lucide-react';
+import { Sparkles, Save, DollarSign, Building } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -53,6 +53,7 @@ export default function OwnerSetupPage(): React.JSX.Element {
       return;
     }
     loadExistingConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadExistingConfig = async (): Promise<void> => {
@@ -64,7 +65,7 @@ export default function OwnerSetupPage(): React.JSX.Element {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
