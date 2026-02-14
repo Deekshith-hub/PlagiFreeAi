@@ -434,17 +434,16 @@ async def register(user_data: UserRegister):
         "rewrites_today": 0,
         "credits": 0,
         "reset_date": reset_date,
-        "email_verified": False,
+        "email_verified": True,  # Auto-verified - email verification disabled
         "is_admin": is_admin,
-        "verification_token": verification_token,
-        "verification_expiry": verification_expiry,
+        "verification_token": None,
+        "verification_expiry": None,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.users.insert_one(user_doc)
     
-    # Send verification email
-    send_verification_email(user_data.email, verification_token)
+    # Email verification disabled - no email sent
     
     token = create_access_token(user_id)
     
@@ -455,7 +454,7 @@ async def register(user_data: UserRegister):
         rewrites_today=0,
         credits=0,
         reset_date=reset_date,
-        email_verified=False,
+        email_verified=True,
         is_admin=is_admin
     )
     
