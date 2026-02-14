@@ -110,9 +110,8 @@ export default function EditorPage(): React.JSX.Element {
     
     toast.success('Downloaded as .txt!');
   };
-  };
 
-  const handleDownloadDocx = async () => {
+  const handleDownloadDocx = async (): Promise<void> => {
     if (!currentHistoryId) {
       toast.error('No text to download');
       return;
@@ -132,16 +131,16 @@ export default function EditorPage(): React.JSX.Element {
       link.remove();
       
       toast.success('Downloaded as .docx!');
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Failed to download .docx file');
     }
   };
 
-  const wordCount = (text) => {
+  const wordCount = (text: string): number => {
     return text.trim() ? text.trim().split(/\s+/).length : 0;
   };
 
-  const charCount = (text) => {
+  const charCount = (text: string): number => {
     return text.length;
   };
 
