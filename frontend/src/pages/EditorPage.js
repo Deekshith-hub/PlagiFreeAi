@@ -135,8 +135,7 @@ export default function EditorPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Email Verification Banner */}
-      {user && !user.email_verified && <EmailVerificationBanner />}
+      {/* Email Verification Banner - Disabled */}
       
       {/* Header */}
       <header className="backdrop-blur-xl bg-white/80 border-b border-white/20 supports-[backdrop-filter]:bg-white/60 sticky top-0 z-40">
