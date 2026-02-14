@@ -1,12 +1,25 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { User } from '@/types/user';
+import { LoginResponse, RegisterResponse, UsageResponse } from '@/types/api';
 
-const AuthContext = createContext();
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<User>;
+  signup: (email: string, password: string) => Promise<User>;
+  logout: () => void;
+  loading: boolean;
+  updateUser: (updates: Partial<User>) => void;
+  fetchUserData: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider');
@@ -14,10 +27,14 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (token) {
@@ -28,9 +45,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const fetchUserData = async () => {
+  const fetchUserData = async (): Promise<void> => {
     try {
-      const response = await axios.get(`${API}/usage`);
+      const response = await axios.get<UsageResponse>(`${API}/usage`);
       setUser({
         daily_limit: response.data.daily_limit,
         rewrites_today: response.data.rewrites_today,
@@ -45,8 +62,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    const response = await axios.post(`${API}/auth/login`, { email, password });
+  const login = async (email: string, password: string): Promise<User> => {
+    const response = await axios.post<LoginResponse>(`${API}/auth/login`, { email, password });
     const { token: newToken, user: userData } = response.data;
     
     localStorage.setItem('token', newToken);
@@ -57,8 +74,8 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const signup = async (email, password) => {
-    const response = await axios.post(`${API}/auth/register`, { email, password });
+  const signup = async (email: string, password: string): Promise<User> => {
+    const response = await axios.post<RegisterResponse>(`${API}/auth/register`, { email, password });
     const { token: newToken, user: userData } = response.data;
     
     localStorage.setItem('token', newToken);
@@ -76,8 +93,8 @@ export const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
   };
 
-  const updateUser = (updates) => {
-    setUser(prev => ({ ...prev, ...updates }));
+  const updateUser = (updates: Partial<User>): void => {
+    setUser(prev => prev ? { ...prev, ...updates } : null);
   };
 
   return (

@@ -1,5 +1,5 @@
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import "@/App.css";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
@@ -12,7 +12,11 @@ import OwnerSetupPage from "@/pages/OwnerSetupPage";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
-const ProtectedRoute = ({ children }) => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -26,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
-function AppRoutes() {
+function AppRoutes(): React.JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
@@ -69,7 +73,7 @@ function AppRoutes() {
   );
 }
 
-function App() {
+function App(): React.JSX.Element {
   return (
     <AuthProvider>
       <BrowserRouter>
