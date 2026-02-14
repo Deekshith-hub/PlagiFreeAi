@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Copy, Download, History, LogOut, BarChart3, FileText, CreditCard, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -7,30 +7,41 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 import EmailVerificationBanner from '@/components/EmailVerificationBanner';
+import { RewriteResponse } from '@/types/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function EditorPage() {
+interface ModeOption {
+  value: string;
+  label: string;
+}
+
+interface ToneOption {
+  value: string;
+  label: string;
+}
+
+export default function EditorPage(): React.JSX.Element {
   const navigate = useNavigate();
   const { user, logout, fetchUserData } = useAuth();
-  const [originalText, setOriginalText] = useState('');
-  const [rewrittenText, setRewrittenText] = useState('');
-  const [mode, setMode] = useState('standard');
-  const [tone, setTone] = useState('professional');
-  const [loading, setLoading] = useState(false);
-  const [plagiarismScore, setPlagiarismScore] = useState(null);
-  const [showDiff, setShowDiff] = useState(false);
-  const [currentHistoryId, setCurrentHistoryId] = useState(null);
+  const [originalText, setOriginalText] = useState<string>('');
+  const [rewrittenText, setRewrittenText] = useState<string>('');
+  const [mode, setMode] = useState<string>('standard');
+  const [tone, setTone] = useState<string>('professional');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [plagiarismScore, setPlagiarismScore] = useState<number | null>(null);
+  const [showDiff, setShowDiff] = useState<boolean>(false);
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
 
-  const modes = [
+  const modes: ModeOption[] = [
     { value: 'light', label: 'Light' },
     { value: 'standard', label: 'Standard' },
     { value: 'aggressive', label: 'Aggressive' },
     { value: 'human-like', label: 'Human-Like' }
   ];
 
-  const tones = [
+  const tones: ToneOption[] = [
     { value: 'academic', label: 'Academic' },
     { value: 'professional', label: 'Professional' },
     { value: 'casual', label: 'Casual' },
@@ -38,7 +49,7 @@ export default function EditorPage() {
     { value: 'formal', label: 'Formal' }
   ];
 
-  const handleRewrite = async () => {
+  const handleRewrite = async (): Promise<void> => {
     if (!originalText.trim()) {
       toast.error('Please enter text to rewrite');
       return;
@@ -47,7 +58,7 @@ export default function EditorPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API}/rewrite`, {
+      const response = await axios.post<RewriteResponse>(`${API}/rewrite`, {
         text: originalText,
         mode,
         tone
@@ -59,7 +70,7 @@ export default function EditorPage() {
       toast.success('Text rewritten successfully!');
       
       await fetchUserData();
-    } catch (error) {
+    } catch (error: any) {
       const message = error.response?.data?.detail || 'Failed to rewrite text';
       toast.error(message);
     } finally {
@@ -67,7 +78,7 @@ export default function EditorPage() {
     }
   };
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     if (!rewrittenText) {
       toast.error('No text to copy');
       return;
@@ -81,7 +92,7 @@ export default function EditorPage() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = (): void => {
     if (!rewrittenText) {
       toast.error('No text to download');
       return;
@@ -98,6 +109,7 @@ export default function EditorPage() {
     URL.revokeObjectURL(url);
     
     toast.success('Downloaded as .txt!');
+  };
   };
 
   const handleDownloadDocx = async () => {

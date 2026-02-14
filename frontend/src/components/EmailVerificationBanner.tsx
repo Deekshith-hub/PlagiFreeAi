@@ -1,21 +1,25 @@
+import React, { useState } from 'react';
 import { AlertCircle, Mail, X } from 'lucide-react';
-import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function EmailVerificationBanner({ onDismiss }) {
-  const [sending, setSending] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+interface EmailVerificationBannerProps {
+  onDismiss?: () => void;
+}
 
-  const handleResend = async () => {
+export default function EmailVerificationBanner({ onDismiss }: EmailVerificationBannerProps): React.JSX.Element | null {
+  const [sending, setSending] = useState<boolean>(false);
+  const [dismissed, setDismissed] = useState<boolean>(false);
+
+  const handleResend = async (): Promise<void> => {
     setSending(true);
     try {
       await axios.post(`${API}/auth/resend-verification`);
       toast.success('Verification email sent! Please check your inbox.');
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to send verification email');
     } finally {
       setSending(false);

@@ -1,26 +1,38 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
-export default function LoginPage() {
+export default function SignupPage(): React.JSX.Element {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { signup } = useAuth();
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await login(email, password);
-      toast.success('Welcome back!');
+      await signup(email, password);
+      toast.success('Account created successfully!');
       navigate('/editor');
-    } catch (error) {
-      const message = error.response?.data?.detail || 'Login failed. Please check your credentials.';
+    } catch (error: any) {
+      const message = error.response?.data?.detail || 'Signup failed. Please try again.';
       toast.error(message);
     } finally {
       setLoading(false);
@@ -40,8 +52,8 @@ export default function LoginPage() {
             </div>
             <span className="text-3xl font-jakarta font-bold text-slate-900">PlagiFree AI</span>
           </div>
-          <h1 className="text-2xl font-jakarta font-semibold text-slate-900">Welcome Back</h1>
-          <p className="text-slate-600 mt-2">Login to continue rewriting</p>
+          <h1 className="text-2xl font-jakarta font-semibold text-slate-900">Create Your Account</h1>
+          <p className="text-slate-600 mt-2">Start rewriting text for free</p>
         </div>
 
         {/* Form */}
@@ -55,7 +67,7 @@ export default function LoginPage() {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   id="email"
-                  data-testid="login-email-input"
+                  data-testid="signup-email-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -74,7 +86,7 @@ export default function LoginPage() {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   id="password"
-                  data-testid="login-password-input"
+                  data-testid="signup-password-input"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -85,21 +97,40 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  id="confirmPassword"
+                  data-testid="signup-confirm-password-input"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
             <button
-              data-testid="login-submit-btn"
+              data-testid="signup-submit-btn"
               type="submit"
               disabled={loading}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 py-3 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-slate-600">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                Sign up
+              Already have an account?{' '}
+              <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                Login
               </Link>
             </p>
           </div>

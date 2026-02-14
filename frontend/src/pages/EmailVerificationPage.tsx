@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function EmailVerificationPage() {
+type VerificationStatus = 'verifying' | 'success' | 'error';
+
+export default function EmailVerificationPage(): React.JSX.Element {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState('verifying'); // verifying, success, error
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<VerificationStatus>('verifying');
+  const [message, setMessage] = useState<string>('');
   
   const token = searchParams.get('token');
 
@@ -24,9 +26,9 @@ export default function EmailVerificationPage() {
     }
   }, [token]);
 
-  const verifyEmail = async (token) => {
+  const verifyEmail = async (token: string): Promise<void> => {
     try {
-      const response = await axios.post(`${API}/auth/verify-email?token=${token}`);
+      const response = await axios.post<{ message: string }>(`${API}/auth/verify-email?token=${token}`);
       setStatus('success');
       setMessage(response.data.message);
       toast.success('Email verified successfully!');
@@ -34,7 +36,7 @@ export default function EmailVerificationPage() {
       setTimeout(() => {
         navigate('/editor');
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       setStatus('error');
       setMessage(error.response?.data?.detail || 'Verification failed');
       toast.error('Email verification failed');

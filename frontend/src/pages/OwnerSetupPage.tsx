@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Save, DollarSign, Mail, Building, CreditCard } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -8,11 +8,30 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function OwnerSetupPage() {
+interface OwnerSetupFormData {
+  owner_name: string;
+  business_name: string;
+  support_email: string;
+  upi_id: string;
+  bank_account: string;
+  ifsc_code: string;
+  account_holder_name: string;
+  gst_number: string;
+  country: string;
+  currency: string;
+  terms_url: string;
+  refund_policy: string;
+}
+
+interface ConfigResponse {
+  payments_enabled?: boolean;
+}
+
+export default function OwnerSetupPage(): React.JSX.Element {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formData, setFormData] = useState<OwnerSetupFormData>({
     owner_name: '',
     business_name: '',
     support_email: '',
@@ -36,20 +55,20 @@ export default function OwnerSetupPage() {
     loadExistingConfig();
   }, [user]);
 
-  const loadExistingConfig = async () => {
+  const loadExistingConfig = async (): Promise<void> => {
     try {
-      const response = await axios.get(`${API}/owner/config`);
+      const response = await axios.get<OwnerSetupFormData>(`${API}/owner/config`);
       setFormData(response.data);
     } catch (error) {
       // No existing config, that's fine
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     if (!formData.owner_name || !formData.support_email) {
@@ -65,7 +84,7 @@ export default function OwnerSetupPage() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API}/owner/setup`, formData);
+      const response = await axios.post<ConfigResponse>(`${API}/owner/setup`, formData);
       toast.success('Configuration saved successfully!');
       
       if (response.data.payments_enabled) {
@@ -73,7 +92,7 @@ export default function OwnerSetupPage() {
       }
       
       navigate('/editor');
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to save configuration');
     } finally {
       setLoading(false);

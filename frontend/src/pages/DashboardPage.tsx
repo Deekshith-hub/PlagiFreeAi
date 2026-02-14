@@ -1,36 +1,37 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, LogOut, FileEdit, BarChart3, Calendar } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { HistoryItem } from '@/types/api';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function DashboardPage() {
+export default function DashboardPage(): React.JSX.Element {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetchHistory();
   }, []);
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (): Promise<void> => {
     try {
-      const response = await axios.get(`${API}/history`);
+      const response = await axios.get<HistoryItem[]>(`${API}/history`);
       setHistory(response.data);
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Failed to fetch history');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (isoString) => {
+  const formatDate = (isoString: string): string => {
     const date = new Date(isoString);
     return date.toLocaleDateString('en-US', {
       month: 'short',

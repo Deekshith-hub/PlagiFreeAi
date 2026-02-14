@@ -1,8 +1,9 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, FileText, Zap, Shield, History, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function LandingPage() {
+export default function LandingPage(): React.JSX.Element {
   const navigate = useNavigate();
 
   const features = [

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -8,12 +8,20 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-export default function PaymentSuccessPage() {
+type PaymentStatus = 'checking' | 'success' | 'error';
+
+interface PaymentStatusResponse {
+  status: 'completed' | 'pending' | 'expired';
+  message?: string;
+  credits_added?: number;
+}
+
+export default function PaymentSuccessPage(): React.JSX.Element {
   const navigate = useNavigate();
   const { fetchUserData } = useAuth();
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState('checking'); // checking, success, error
-  const [creditsAdded, setCreditsAdded] = useState(0);
+  const [status, setStatus] = useState<PaymentStatus>('checking');
+  const [creditsAdded, setCreditsAdded] = useState<number>(0);
   
   const sessionId = searchParams.get('session_id');
 
@@ -25,7 +33,7 @@ export default function PaymentSuccessPage() {
     }
   }, [sessionId]);
 
-  const pollPaymentStatus = async (sessionId, attempts = 0) => {
+  const pollPaymentStatus = async (sessionId: string, attempts: number = 0): Promise<void> => {
     const maxAttempts = 5;
     
     if (attempts >= maxAttempts) {
@@ -35,13 +43,13 @@ export default function PaymentSuccessPage() {
     }
 
     try {
-      const response = await axios.get(`${API}/payments/status/${sessionId}`);
+      const response = await axios.get<PaymentStatusResponse>(`${API}/payments/status/${sessionId}`);
       
       if (response.data.status === 'completed') {
         setStatus('success');
         setCreditsAdded(response.data.credits_added || 20);
         await fetchUserData();
-        toast.success(response.data.message);
+        toast.success(response.data.message || 'Payment successful');
       } else if (response.data.status === 'expired') {
         setStatus('error');
         toast.error('Payment session expired');
@@ -49,7 +57,7 @@ export default function PaymentSuccessPage() {
         // Continue polling
         setTimeout(() => pollPaymentStatus(sessionId, attempts + 1), 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment status check failed:', error);
       setStatus('error');
       toast.error('Failed to verify payment');
