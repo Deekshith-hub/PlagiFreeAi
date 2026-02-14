@@ -3,6 +3,8 @@
 import * as React from "react"
 
 const TOAST_LIMIT = 1
+// Toast stays visible for a very long time (configurable per-toast)
+// This is intentional for this application's user experience
 const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = {

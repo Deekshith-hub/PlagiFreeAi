@@ -1,3 +1,5 @@
+import { User } from './user';
+
 export interface RewriteRequest {
   text: string;
   mode: string;
@@ -44,28 +46,10 @@ export interface UsageResponse {
 
 export interface LoginResponse {
   token: string;
-  user: {
-    id?: string;
-    email?: string;
-    daily_limit: number;
-    rewrites_today: number;
-    credits?: number;
-    reset_date: string;
-    email_verified?: boolean;
-    is_admin?: boolean;
-  };
+  user: User;
 }
 
 export interface RegisterResponse {
   token: string;
-  user: {
-    id?: string;
-    email?: string;
-    daily_limit: number;
-    rewrites_today: number;
-    credits?: number;
-    reset_date: string;
-    email_verified?: boolean;
-    is_admin?: boolean;
-  };
+  user: User;
 }
