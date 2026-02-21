@@ -15,6 +15,8 @@ from passlib.context import CryptContext
 import jwt
 # from emergentintegrations.llm.chat import LlmChat, UserMessage
 # from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from google import genai
+from google.genai import types
 from docx import Document
 from io import BytesIO
 import difflib
@@ -233,7 +235,7 @@ def create_docx(text: str) -> BytesIO:
 # ============= AI REWRITING =============
 
 async def rewrite_text_with_ai(text: str, mode: str, tone: str) -> str:
-    """Rewrite text using OpenAI GPT-5.2 with specific mode and tone"""
+    """Rewrite text using Google Gemini with specific mode and tone"""
     
     mode_instructions = {
         "light": "Make minimal changes to the text. Focus on rephrasing key sentences while maintaining most of the structure. Ensure the text remains academically safe and grammatically correct.",
@@ -250,7 +252,7 @@ async def rewrite_text_with_ai(text: str, mode: str, tone: str) -> str:
         "formal": "Use highly formal language with sophisticated vocabulary. Maintain strict grammatical correctness and traditional writing conventions."
     }
     
-    system_message = f"""You are an expert text rewriting assistant. Your task is to rewrite the provided text to make it 100% plagiarism-free while preserving the original meaning.
+    system_instruction = f"""You are an expert text rewriting assistant. Your task is to rewrite the provided text to make it 100% plagiarism-free while preserving the original meaning.
 
 Rewriting Mode: {mode.upper()}
 {mode_instructions.get(mode, mode_instructions['standard'])}
@@ -271,17 +273,40 @@ CRITICAL RULES:
 Provide ONLY the rewritten text without any explanations, introductions, or meta-commentary."""
     
     try:
-        chat = LlmChat(
-            api_key=os.environ['EMERGENT_LLM_KEY'],
-            session_id=str(uuid.uuid4()),
-            system_message=system_message
-        )
-        chat.with_model("openai", "gpt-5.2")
+        # Get Google API key from environment
+        google_api_key = os.environ.get('GOOGLE_API_KEY')
+        if not google_api_key:
+            raise ValueError("GOOGLE_API_KEY not found in environment variables")
         
-        user_message = UserMessage(text=text)
-        response = await chat.send_message(user_message)
+        # Initialize client
+        client = genai.Client(api_key=google_api_key)
         
-        return response.strip()
+        # Create the full prompt with system instruction
+        full_prompt = f"{system_instruction}\n\nText to rewrite:\n\n{text}"
+        
+        # Generate response - try best models first
+        try:
+            # Try Gemini 1.5 Pro (best quality)
+            response = await client.aio.models.generate_content(
+                model='models/gemini-2.0-flash',
+                contents=full_prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.8,
+                    max_output_tokens=8000,
+                )
+            )
+        except Exception:
+            # Fallback: try Gemini 1.5 Flash (fast and reliable)
+            response = await client.aio.models.generate_content(
+                model='models/gemini-2.0-flash',
+                contents=full_prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    max_output_tokens=4000,
+                )
+            )
+        
+        return response.text.strip()
     except Exception as e:
         logger.error(f"AI rewriting error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"AI rewriting failed: {str(e)}")
