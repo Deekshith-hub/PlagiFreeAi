@@ -183,10 +183,10 @@ export default function EditorPage(): React.JSX.Element {
                   navigate('/');
                   toast.success('Logged out successfully');
                 }}
-                className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
+                className="flex items-center gap-1 sm:gap-2 text-slate-600 hover:text-slate-900 text-xs sm:text-sm font-medium transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                Logout
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>

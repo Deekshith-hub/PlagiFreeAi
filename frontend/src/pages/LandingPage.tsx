@@ -43,26 +43,26 @@ export default function LandingPage(): React.JSX.Element {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="backdrop-blur-xl bg-white/80 border-b border-white/20 supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-indigo-400 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-600 to-indigo-400 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="text-2xl font-jakarta font-bold text-slate-900">PlagiFree AI</span>
+              <span className="text-xl sm:text-2xl font-jakarta font-bold text-slate-900">PlagiFree AI</span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 flex-wrap">
               <button
                 data-testid="header-login-btn"
                 onClick={() => navigate('/login')}
-                className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-full px-6 py-2 font-medium transition-colors"
+                className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-full px-3 sm:px-6 py-1.5 sm:py-2 text-sm font-medium transition-colors"
               >
                 Login
               </button>
               <button
                 data-testid="header-signup-btn"
                 onClick={() => navigate('/signup')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 rounded-full px-6 py-2 font-semibold transition-all hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 rounded-full px-3 sm:px-6 py-1.5 sm:py-2 text-sm font-semibold transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
                 Get Started
               </button>
