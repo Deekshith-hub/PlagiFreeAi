@@ -755,10 +755,16 @@ async def stripe_webhook(request: Request):
 # Include router
 app.include_router(api_router)
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://plagifree-ai.vercel.app",  # Add your Vercel domain
+        "https://*.vercel.app",  # Allow Vercel preview deployments
+    ],
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
