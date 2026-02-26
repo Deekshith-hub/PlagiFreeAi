@@ -12,9 +12,7 @@ from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
-import jwt
-# from emergentintegrations.llm.chat import LlmChat, UserMessage
-# from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from jose import jwt, JWTError
 from groq import AsyncGroq
 from docx import Document
 from io import BytesIO
