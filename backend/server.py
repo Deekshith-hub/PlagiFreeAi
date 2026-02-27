@@ -12,7 +12,8 @@ from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
-from jose import jwt, JWTError
+import jwt
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from groq import AsyncGroq
 from docx import Document
 from io import BytesIO
@@ -171,9 +172,9 @@ def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         return payload
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
-    except jwt.InvalidTokenError:
+    except InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
