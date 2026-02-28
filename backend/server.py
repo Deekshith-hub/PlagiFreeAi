@@ -766,8 +766,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://plagifree-ai.vercel.app",  # Add your Vercel domain
-        "https://*.vercel.app",  # Allow Vercel preview deployments
+        "https://plagifreeai.tech",
+        "https://www.plagifreeai.tech",
+        "https://plagifree-ai.vercel.app",
+        "https://*.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
