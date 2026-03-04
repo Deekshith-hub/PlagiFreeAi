@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { HistoryItem } from '@/types/api';
+import SEOHead from '@/components/SEOHead';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -44,6 +45,13 @@ export default function DashboardPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SEOHead
+        title="Dashboard"
+        description="View your rewrite history, usage stats, and account details."
+        path="/dashboard"
+        noindex={true}
+      />
+      
       {/* Header */}
       <header className="backdrop-blur-xl bg-white/80 border-b border-white/20 supports-[backdrop-filter]:bg-white/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">

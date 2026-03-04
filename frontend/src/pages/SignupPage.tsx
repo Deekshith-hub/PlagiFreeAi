@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import SEOHead from '@/components/SEOHead';
 
 export default function SignupPage(): React.JSX.Element {
   const navigate = useNavigate();
@@ -41,6 +42,12 @@ export default function SignupPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <SEOHead
+        title="Sign Up — Create Free Account"
+        description="Create a free PlagiFree AI account and start rewriting text with AI. Get daily free rewrites, multiple rewriting modes, and grammar correction."
+        path="/signup"
+      />
+      
       <div className="gradient-bg absolute inset-0"></div>
       
       <div className="max-w-md w-full relative">

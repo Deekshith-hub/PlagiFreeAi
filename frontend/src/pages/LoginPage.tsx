@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import SEOHead from '@/components/SEOHead';
 
 export default function LoginPage(): React.JSX.Element {
   const navigate = useNavigate();
@@ -29,6 +30,12 @@ export default function LoginPage(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <SEOHead
+        title="Login"
+        description="Log in to your PlagiFree AI account to rewrite text, track history, and access all features."
+        path="/login"
+      />
+      
       <div className="gradient-bg absolute inset-0"></div>
       
       <div className="max-w-md w-full relative">

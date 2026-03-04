@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /editor
+Disallow: /dashboard
+Disallow: /admin/
+Disallow: /payment-success
+
+Sitemap: https://plagifreeai.tech/sitemap.xml
