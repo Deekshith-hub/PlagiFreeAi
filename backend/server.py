@@ -51,6 +51,23 @@ security = HTTPBearer()
 
 # Create the main app
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://plagifreeai.tech",
+        "https://www.plagifreeai.tech",
+        "https://plagifree-ai.vercel.app",
+        # "https://*.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api_router = APIRouter(prefix="/api")
 
 # Logging
@@ -759,22 +776,6 @@ async def stripe_webhook(request: Request):
 
 # Include router
 app.include_router(api_router)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://plagifreeai.tech",
-        "https://www.plagifreeai.tech",
-        "https://plagifree-ai.vercel.app",
-        "https://*.vercel.app",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
